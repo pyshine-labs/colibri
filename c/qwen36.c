@@ -326,12 +326,34 @@ static void load_tokenizer(const char *path){
         g_sp_str = malloc(g_nspecial*sizeof(char*));
         g_sp_id   = malloc(g_nspecial*sizeof(int));
         g_sp_len  = malloc(g_nspecial*sizeof(int));
+        int amx = -1;
         for (int k=0;k<adds->len;k++){
             jval *t = adds->kids[k];
             const char *c = jstr(t,"content");
             g_sp_str[k] = c?strdup(c):strdup("");
             g_sp_id[k]  = (int)jnum(t,"id");
             g_sp_len[k] = (int)strlen(g_sp_str[k]);
+            if (g_sp_id[k] > amx) amx = g_sp_id[k];
+        }
+        /* Added-token ids sit ABOVE model.vocab (Qwen3.6: 248044+ vs a vocab
+         * table sized from model.vocab alone), and the model DOES generate
+         * them: </think>, <tool_call>, </tool_call>, <tool_response>. Every
+         * such id lands past g_tok_n and decode_id_to_bytes drops it, so the
+         * tag silently vanishes from the stream -- think blocks never close
+         * and tool calls arrive without their wrapper. Grow the decode table
+         * and fill the gaps from the added_tokens list. */
+        if (amx >= g_tok_n){
+            int nn = amx + 1;
+            char **grown = realloc(g_tok, (size_t)nn * sizeof(char*));
+            if (grown){
+                g_tok = grown;
+                memset(g_tok + g_tok_n, 0, (size_t)(nn - g_tok_n) * sizeof(char*));
+                g_tok_n = nn;
+            }
+        }
+        for (int k=0;k<adds->len;k++){
+            int id = g_sp_id[k];
+            if (id>=0 && id<g_tok_n && !g_tok[id]) g_tok[id] = strdup(g_sp_str[k]);
         }
     }
     build_byte_sym();

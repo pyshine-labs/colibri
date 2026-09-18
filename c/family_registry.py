@@ -1224,7 +1224,11 @@ FAMILIES = (
         expert_inventory=_individual_expert_inventory(_GLM_EXPERT),
         config_section="text_config",
         limits=FamilyLimits(8192, 262144, 1024, 8192, 1, 8, "Q36_MAXT"),
-        capabilities=FamilyCapabilities(False, False, False, True),
+        # tools=True: the official Qwen3.6 chat_template.jinja declares and parses
+        # the same <function=...><parameter=...> syntax as Qwen3.8 (lines 45-142
+        # are byte-identical), and openai_server.py renders and parses it through
+        # the qwen38 helpers (parse_arch_tool_calls qwen36 branch).
+        capabilities=FamilyCapabilities(True, False, False, True),
         has_gateway_adapter=True,
         # coli run stays unwired on purpose: cmd_run dispatches per arch after
         # this gate, and without a qwen36 branch the engine would inherit GLM's
