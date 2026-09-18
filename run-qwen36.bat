@@ -1,6 +1,6 @@
 @echo off
 title Colibri Qwen3.6-35B-A3B (RTX 4060 Ti 16GB)
-cd /d F:\colibri-work\colibri\c
+cd /d F:\colibri-work\colibri-new\c
 
 rem ---- stop any previous instance (harmless if none is running) ----
 "E:\Users\pc\miniconda3\python.exe" coli stop >nul 2>&1
